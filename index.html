@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>芝士塔罗</title>
+    <meta
+      name="description"
+      content="一个简约的塔罗抽牌网站，提供今日指引、感情、事业与学业方向的塔罗解读。"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="site-title">
+        <div class="hero__media" aria-hidden="true"></div>
+        <div class="hero__shade" aria-hidden="true"></div>
+
+        <div class="hero__content">
+          <p class="kicker">MINIMAL TAROT</p>
+          <h1 id="site-title">芝士塔罗</h1>
+          <p class="intro">
+            选一个方向，放下一个问题，让牌面给此刻的你一点线索。
+          </p>
+
+          <div class="reading-panel" aria-label="塔罗抽牌">
+            <div class="field-group">
+              <p class="field-label">问题类型</p>
+              <div class="topic-grid" aria-label="问题类型">
+                <button
+                  class="topic-button is-active"
+                  type="button"
+                  aria-pressed="true"
+                  data-topic="daily"
+                >
+                  今日
+                </button>
+                <button
+                  class="topic-button"
+                  type="button"
+                  aria-pressed="false"
+                  data-topic="love"
+                >
+                  感情
+                </button>
+                <button
+                  class="topic-button"
+                  type="button"
+                  aria-pressed="false"
+                  data-topic="career"
+                >
+                  事业
+                </button>
+                <button
+                  class="topic-button"
+                  type="button"
+                  aria-pressed="false"
+                  data-topic="study"
+                >
+                  学业
+                </button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <p class="field-label">牌阵</p>
+              <div class="mode-tabs" role="tablist" aria-label="牌阵">
+                <button
+                  class="mode-tab is-active"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  data-mode="single"
+                >
+                  单张指引
+                </button>
+                <button
+                  class="mode-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  data-mode="three"
+                >
+                  三牌牌阵
+                </button>
+              </div>
+            </div>
+
+            <label class="question-label" for="question">你的问题</label>
+            <textarea
+              id="question"
+              rows="3"
+              maxlength="120"
+              placeholder="例如：我现在最需要看见什么？"
+            ></textarea>
+            <p class="ritual-tip" id="ritualTip">
+              抽牌前，先在心里把问题说清楚。
+            </p>
+            <p class="deck-count" id="deckCount">完整 78 张塔罗牌组</p>
+
+            <div class="actions">
+              <button class="primary-action" type="button" id="drawButton">
+                抽牌
+              </button>
+              <button class="ghost-action" type="button" id="resetButton">
+                重新开始
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="results" aria-live="polite" aria-label="抽牌结果">
+        <div class="results__head">
+          <p class="eyebrow">READING</p>
+          <h2 id="resultTitle">先选择一个方向</h2>
+          <p class="result-subtitle" id="resultSubtitle">
+            你的牌会根据问题类型给出不同角度的解读。
+          </p>
+        </div>
+        <div class="spread" id="spread"></div>
+        <div class="result-actions" id="readingActions" hidden>
+          <button class="secondary-action" type="button" id="saveReadingButton">
+            保存解读
+          </button>
+          <button class="secondary-action" type="button" id="copyReadingButton">
+            复制文案
+          </button>
+          <p class="action-status" id="actionStatus" role="status"></p>
+        </div>
+        <section class="history" aria-labelledby="historyTitle">
+          <div class="history__head">
+            <div>
+              <p class="eyebrow">ARCHIVE</p>
+              <h2 id="historyTitle">最近解读</h2>
+            </div>
+            <button class="text-action" type="button" id="clearHistoryButton" hidden>
+              清空
+            </button>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </section>
+        <p class="note">
+          塔罗结果仅用于娱乐与自我反思，不替代医疗、法律、财务等专业建议。
+        </p>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
