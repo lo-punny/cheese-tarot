@@ -332,13 +332,30 @@ h2 {
   overflow: hidden;
 }
 
+.tarot-image {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #efe5d1;
+  transition: transform 220ms ease;
+}
+
+.tarot-image.is-reversed {
+  transform: rotate(180deg);
+}
+
 .tarot-card::before,
 .tarot-card::after {
   content: "";
   position: absolute;
+  z-index: 2;
   inset: 12px;
   border: 1px solid rgba(255, 250, 241, 0.36);
   border-radius: 6px;
+  pointer-events: none;
 }
 
 .tarot-card::after {
@@ -348,7 +365,7 @@ h2 {
 
 .tarot-symbol {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: grid;
   place-items: center;
   width: 54%;
@@ -450,6 +467,38 @@ h2 {
 
 .shuffle-lines span:nth-child(3) {
   width: 58%;
+}
+
+.ai-summary {
+  width: min(920px, 100%);
+  margin: 24px auto 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 250, 241, 0.84);
+  padding: 20px;
+  box-shadow: 0 12px 34px rgba(25, 22, 20, 0.07);
+}
+
+.ai-summary[hidden] {
+  display: none;
+}
+
+.ai-summary h2 {
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.ai-summary p:last-child {
+  margin: 12px 0 0;
+  color: #332d28;
+  line-height: 1.85;
+}
+
+.ai-summary[data-state="loading"] p:last-child {
+  color: var(--moss);
+}
+
+.ai-summary[data-state="error"] p:last-child {
+  color: var(--muted);
 }
 
 .result-actions {
@@ -568,6 +617,12 @@ h2 {
 
 .history-item p {
   margin-bottom: 10px;
+}
+
+.history-summary {
+  margin-top: 10px;
+  border-top: 1px solid rgba(25, 22, 20, 0.1);
+  padding-top: 10px;
 }
 
 .history-cards {

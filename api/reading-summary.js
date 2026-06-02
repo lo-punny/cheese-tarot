@@ -1,0 +1,152 @@
+const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
+const MAX_QUESTION_LENGTH = 120;
+const MAX_CARDS = 3;
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+
+  if (ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+}
+
+function sendJson(res, status, payload) {
+  res.status(status).json(payload);
+}
+
+function cleanText(value, maxLength = 500) {
+  return String(value || "").trim().slice(0, maxLength);
+}
+
+function normalizeCard(card) {
+  return {
+    position: cleanText(card.position, 40),
+    name: cleanText(card.name, 40),
+    orientation: cleanText(card.orientation, 10),
+    keywords: Array.isArray(card.keywords)
+      ? card.keywords.slice(0, 5).map((keyword) => cleanText(keyword, 16)).filter(Boolean)
+      : [],
+    prompt: cleanText(card.prompt, 260),
+    action: cleanText(card.action, 220),
+    blind: cleanText(card.blind, 220)
+  };
+}
+
+function validatePayload(body) {
+  const question = cleanText(body.question, MAX_QUESTION_LENGTH);
+  const cards = Array.isArray(body.cards) ? body.cards.slice(0, MAX_CARDS).map(normalizeCard) : [];
+
+  if (!cards.length) {
+    return { error: "cards is required" };
+  }
+
+  return {
+    value: {
+      topic: cleanText(body.topic, 20) || "塔罗",
+      mode: cleanText(body.mode, 20) || "牌阵",
+      question,
+      cards
+    }
+  };
+}
+
+function buildPrompt(payload) {
+  const cardLines = payload.cards
+    .map(
+      (card, index) =>
+        `${index + 1}. ${card.position}：${card.name}（${card.orientation}）\n` +
+        `关键词：${card.keywords.join(" / ") || "无"}\n` +
+        `当前提示：${card.prompt}\n` +
+        `行动建议：${card.action}\n` +
+        `需要避开的盲点：${card.blind}`
+    )
+    .join("\n\n");
+
+  return `问题类型：${payload.topic}
+牌阵：${payload.mode}
+用户问题：${payload.question || "未填写具体问题"}
+
+牌面信息：
+${cardLines}
+
+请把这些牌串联成一段中文综合总结。要求：
+1. 语气温柔、简约、偏自我反思，不要恐吓或绝对化预言。
+2. 先概括整体能量，再点出关键矛盾，最后给一个可执行的小建议。
+3. 不要重复逐张牌义，不要超过 180 个中文字符。
+4. 不提供医疗、法律、财务等专业结论。`;
+}
+
+module.exports = async function handler(req, res) {
+  setCorsHeaders(req, res);
+
+  const origin = req.headers.origin;
+  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+    return sendJson(res, 403, { error: "Origin is not allowed" });
+  }
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== "POST") {
+    return sendJson(res, 405, { error: "Method not allowed" });
+  }
+
+  if (!process.env.DEEPSEEK_API_KEY) {
+    return sendJson(res, 500, { error: "DeepSeek API key is not configured" });
+  }
+
+  const { value, error } = validatePayload(req.body || {});
+
+  if (error) {
+    return sendJson(res, 400, { error });
+  }
+
+  try {
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "deepseek-v4-flash",
+        messages: [
+          {
+            role: "system",
+            content:
+              "你是芝士塔罗的解读助手，只做娱乐与自我反思向的塔罗文字总结，避免绝对化预测。"
+          },
+          {
+            role: "user",
+            content: buildPrompt(value)
+          }
+        ],
+        thinking: { type: "disabled" },
+        temperature: 0.7,
+        max_tokens: 260
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return sendJson(res, 502, {
+        error: data?.error?.message || "DeepSeek request failed"
+      });
+    }
+
+    const summary = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!summary) {
+      return sendJson(res, 502, { error: "DeepSeek summary is empty" });
+    }
+
+    return sendJson(res, 200, { summary });
+  } catch {
+    return sendJson(res, 502, { error: "DeepSeek request failed" });
+  }
+};

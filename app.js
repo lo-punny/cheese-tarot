@@ -199,9 +199,39 @@ const tarotCards = [
   }
 ];
 
+const majorImageSlugs = [
+  "fool",
+  "magician",
+  "high-priestess",
+  "empress",
+  "emperor",
+  "hierophant",
+  "lovers",
+  "chariot",
+  "strength",
+  "hermit",
+  "wheel-of-fortune",
+  "justice",
+  "hanged-man",
+  "death",
+  "temperance",
+  "devil",
+  "tower",
+  "star",
+  "moon",
+  "sun",
+  "judgement",
+  "world"
+];
+
+tarotCards.forEach((card, index) => {
+  card.image = `./assets/cards/rws/major-${String(index).padStart(2, "0")}-${majorImageSlugs[index]}.jpg`;
+});
+
 const minorSuits = [
   {
     name: "权杖",
+    slug: "wands",
     mark: "杖",
     keywords: ["行动", "热情", "创造"],
     field: "行动力、灵感和主动选择",
@@ -210,6 +240,7 @@ const minorSuits = [
   },
   {
     name: "圣杯",
+    slug: "cups",
     mark: "杯",
     keywords: ["情感", "关系", "直觉"],
     field: "情绪、关系和内在感受",
@@ -218,6 +249,7 @@ const minorSuits = [
   },
   {
     name: "宝剑",
+    slug: "swords",
     mark: "剑",
     keywords: ["思考", "沟通", "判断"],
     field: "想法、沟通和理性判断",
@@ -226,6 +258,7 @@ const minorSuits = [
   },
   {
     name: "星币",
+    slug: "pentacles",
     mark: "币",
     keywords: ["现实", "资源", "稳定"],
     field: "现实资源、身体节奏和长期积累",
@@ -237,6 +270,7 @@ const minorSuits = [
 const minorRanks = [
   {
     name: "首牌",
+    imageSlug: "ace",
     symbol: "A",
     keywords: ["种子", "机会", "开启"],
     upright: "一个新的机会正在出现，但它还需要被认真接住。",
@@ -246,6 +280,7 @@ const minorRanks = [
   },
   {
     name: "二",
+    imageSlug: "02",
     symbol: "2",
     keywords: ["选择", "平衡", "比较"],
     upright: "你站在两个方向之间，需要看清真正的优先级。",
@@ -255,6 +290,7 @@ const minorRanks = [
   },
   {
     name: "三",
+    imageSlug: "03",
     symbol: "3",
     keywords: ["扩展", "协作", "初成"],
     upright: "事情开始有雏形，适合扩展视野或引入协作。",
@@ -264,6 +300,7 @@ const minorRanks = [
   },
   {
     name: "四",
+    imageSlug: "04",
     symbol: "4",
     keywords: ["稳定", "基础", "停留"],
     upright: "稳定结构正在形成，先守住基本盘。",
@@ -273,6 +310,7 @@ const minorRanks = [
   },
   {
     name: "五",
+    imageSlug: "05",
     symbol: "5",
     keywords: ["冲突", "压力", "调整"],
     upright: "摩擦正在暴露问题，它未必舒服，却能指出需要调整的地方。",
@@ -282,6 +320,7 @@ const minorRanks = [
   },
   {
     name: "六",
+    imageSlug: "06",
     symbol: "6",
     keywords: ["修复", "互惠", "过渡"],
     upright: "局势有机会回到更平衡的位置，支持与回馈都很重要。",
@@ -291,6 +330,7 @@ const minorRanks = [
   },
   {
     name: "七",
+    imageSlug: "07",
     symbol: "7",
     keywords: ["评估", "坚持", "考验"],
     upright: "你已经投入不少，现在适合评估方向和耐心。",
@@ -300,6 +340,7 @@ const minorRanks = [
   },
   {
     name: "八",
+    imageSlug: "08",
     symbol: "8",
     keywords: ["推进", "练习", "节奏"],
     upright: "持续练习和清晰节奏会带来可见进展。",
@@ -309,6 +350,7 @@ const minorRanks = [
   },
   {
     name: "九",
+    imageSlug: "09",
     symbol: "9",
     keywords: ["成果", "独立", "临界"],
     upright: "你已经接近一个成果点，先承认自己走了很远。",
@@ -318,6 +360,7 @@ const minorRanks = [
   },
   {
     name: "十",
+    imageSlug: "10",
     symbol: "10",
     keywords: ["完成", "负荷", "转折"],
     upright: "一个周期接近完成，也可能伴随明显的责任重量。",
@@ -327,6 +370,7 @@ const minorRanks = [
   },
   {
     name: "侍从",
+    imageSlug: "page",
     symbol: "侍",
     keywords: ["学习", "消息", "好奇"],
     upright: "新信息和学习机会正在靠近，适合保持开放。",
@@ -336,6 +380,7 @@ const minorRanks = [
   },
   {
     name: "骑士",
+    imageSlug: "knight",
     symbol: "骑",
     keywords: ["追求", "移动", "冲劲"],
     upright: "能量正在推动你向前，适合主动争取。",
@@ -345,6 +390,7 @@ const minorRanks = [
   },
   {
     name: "王后",
+    imageSlug: "queen",
     symbol: "后",
     keywords: ["成熟", "照料", "接纳"],
     upright: "成熟的力量来自稳定感受和细致照料。",
@@ -354,6 +400,7 @@ const minorRanks = [
   },
   {
     name: "国王",
+    imageSlug: "king",
     symbol: "王",
     keywords: ["掌控", "责任", "整合"],
     upright: "你有机会以更成熟的方式管理局面。",
@@ -367,6 +414,7 @@ const minorArcanaCards = minorSuits.flatMap((suit) =>
   minorRanks.map((rank) => ({
     name: `${suit.name}${rank.name}`,
     symbol: `${suit.mark}${rank.symbol}`,
+    image: `./assets/cards/rws/${suit.slug}-${rank.imageSlug}.jpg`,
     keywords: [...rank.keywords.slice(0, 2), suit.keywords[0]],
     upright: `${rank.upright} 在${suit.field}上，它提醒你${suit.strength}。`,
     reversed: `${rank.reversed} 在${suit.field}上，尤其要留意${suit.imbalance}。`,
@@ -435,6 +483,8 @@ let currentReading = null;
 
 const STORAGE_KEY = "cheeseTarotReadings";
 const MAX_HISTORY_ITEMS = 5;
+const AI_SUMMARY_ENDPOINT =
+  window.CHEESE_TAROT_API_URL || "https://cheese-tarot.vercel.app/api/reading-summary";
 
 const spread = document.querySelector("#spread");
 const resultTitle = document.querySelector("#resultTitle");
@@ -448,6 +498,8 @@ const readingActions = document.querySelector("#readingActions");
 const saveReadingButton = document.querySelector("#saveReadingButton");
 const copyReadingButton = document.querySelector("#copyReadingButton");
 const actionStatus = document.querySelector("#actionStatus");
+const aiSummary = document.querySelector("#aiSummary");
+const aiSummaryText = document.querySelector("#aiSummaryText");
 const historyList = document.querySelector("#historyList");
 const clearHistoryButton = document.querySelector("#clearHistoryButton");
 const modeTabs = document.querySelectorAll(".mode-tab");
@@ -489,6 +541,19 @@ function setSavedReadings(readings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
 }
 
+function syncSavedReading(reading) {
+  const readings = getSavedReadings();
+  const index = readings.findIndex((item) => item.id === reading.id);
+
+  if (index === -1) {
+    return;
+  }
+
+  readings[index] = reading;
+  setSavedReadings(readings);
+  renderHistory();
+}
+
 function formatSavedDate(value) {
   return new Intl.DateTimeFormat("zh-CN", {
     month: "2-digit",
@@ -506,6 +571,18 @@ function showReadingActions(message = "") {
 function hideReadingActions() {
   readingActions.hidden = true;
   actionStatus.textContent = "";
+}
+
+function showAiSummary(message, state = "loading") {
+  aiSummary.hidden = false;
+  aiSummary.dataset.state = state;
+  aiSummaryText.textContent = message;
+}
+
+function hideAiSummary() {
+  aiSummary.hidden = true;
+  aiSummary.dataset.state = "";
+  aiSummaryText.textContent = "";
 }
 
 function renderHistory() {
@@ -529,6 +606,10 @@ function renderHistory() {
         )
         .join("");
 
+      const summary = reading.summary
+        ? `<p class="history-summary">${escapeHtml(reading.summary)}</p>`
+        : "";
+
       return `
         <article class="history-item">
           <div class="history-item__top">
@@ -537,6 +618,7 @@ function renderHistory() {
           </div>
           <p>${escapeHtml(reading.question || "未填写具体问题")}</p>
           <div class="history-cards">${cards}</div>
+          ${summary}
         </article>
       `;
     })
@@ -556,7 +638,9 @@ function buildShareText(reading) {
     )
     .join("\n\n");
 
-  return `芝士塔罗｜${reading.topic} · ${reading.mode}\n问题：${question}\n\n${cards}\n\n仅供娱乐与自我反思。`;
+  const summary = reading.summary ? `\n\n综合总结：${reading.summary}` : "";
+
+  return `芝士塔罗｜${reading.topic} · ${reading.mode}\n问题：${question}\n\n${cards}${summary}\n\n仅供娱乐与自我反思。`;
 }
 
 async function copyText(text) {
@@ -603,6 +687,55 @@ function buildInsight(card, topic, position) {
   };
 }
 
+function buildAiPayload(reading) {
+  return {
+    topic: reading.topic,
+    mode: reading.mode,
+    question: reading.question,
+    cards: reading.cards.slice(0, 3).map((card) => ({
+      position: card.position,
+      name: card.name,
+      orientation: card.orientation,
+      keywords: card.keywords,
+      prompt: card.prompt,
+      action: card.action,
+      blind: card.blind
+    }))
+  };
+}
+
+async function requestAiSummary(reading) {
+  showAiSummary("AI 正在串联牌阵...");
+
+  try {
+    const response = await fetch(AI_SUMMARY_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(buildAiPayload(reading))
+    });
+
+    if (!response.ok) {
+      throw new Error(`Summary request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const summary = typeof data.summary === "string" ? data.summary.trim() : "";
+
+    if (!summary) {
+      throw new Error("Summary response is empty");
+    }
+
+    reading.summary = summary;
+    showAiSummary(summary, "ready");
+    syncSavedReading(reading);
+  } catch {
+    reading.summary = "";
+    showAiSummary("AI 总结暂时不可用，已保留基础解读。", "error");
+  }
+}
+
 function setDrawButtonLoading(isLoading) {
   drawButton.disabled = isLoading;
   drawButton.textContent = isLoading ? "洗牌中..." : "抽牌";
@@ -613,6 +746,7 @@ function renderEmptyState() {
   const topic = getCurrentTopic();
   currentReading = null;
   hideReadingActions();
+  hideAiSummary();
   spread.className = "spread";
   spread.innerHTML = `
     <div class="empty-state">
@@ -624,6 +758,7 @@ function renderEmptyState() {
 function renderShuffleState() {
   currentReading = null;
   hideReadingActions();
+  hideAiSummary();
   spread.className = currentMode === "single" ? "spread is-single" : "spread";
   spread.innerHTML = getCurrentPositions()
     .map(
@@ -673,6 +808,7 @@ function renderReading() {
       position,
       name: card.name,
       symbol: card.symbol,
+      image: card.image,
       keywords: card.keywords,
       orientation,
       prompt: insight.prompt,
@@ -706,7 +842,14 @@ function renderReading() {
       return `
         <article class="card-result">
           <div class="tarot-card" aria-hidden="true">
-            <span class="tarot-symbol">${card.symbol}</span>
+            <img
+              class="tarot-image${card.orientation === "逆位" ? " is-reversed" : ""}"
+              src="${card.image}"
+              alt=""
+              loading="lazy"
+              onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+            />
+            <span class="tarot-symbol" hidden>${card.symbol}</span>
           </div>
           <div class="card-body">
             <p class="position">${card.position}</p>
@@ -735,6 +878,7 @@ function renderReading() {
     })
     .join("");
   showReadingActions();
+  requestAiSummary(currentReading);
 }
 
 function startReading() {

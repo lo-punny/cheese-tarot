@@ -10,8 +10,10 @@
 - 完整 78 张塔罗牌组
   - 22 张大阿卡纳细写牌义
   - 56 张小阿卡纳由花色含义与牌阶含义组合生成
+- 经典 Rider-Waite-Smith 牌面图片路径与加载回退
 - 随机正位 / 逆位
 - 洗牌状态与分段解读
+- DeepSeek AI 综合总结接口（通过 Vercel Serverless 代理）
 - 保存最近 5 次解读到浏览器本地
 - 复制当前解读为分享文案
 - 本地静态运行，无需后端
@@ -20,4 +22,32 @@
 
 直接用浏览器打开 `index.html`。
 
-后续可以迁移到 Next.js，再加入分享图、登录账号和 AI 深度解读。
+## 牌面图片
+
+牌图目录为 `assets/cards/rws/`。如需下载经典 Rider-Waite-Smith 牌图，运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\download-rws-cards.ps1
+```
+
+如果牌图还未下载，页面会自动回退显示原来的牌面符号。
+
+## AI 总结部署
+
+前端默认调用：
+
+```text
+https://cheese-tarot.vercel.app/api/reading-summary
+```
+
+如果 Vercel 项目名不同，需要在 `app.js` 修改 `AI_SUMMARY_ENDPOINT`。
+
+Vercel 环境变量必须配置：
+
+```text
+DEEPSEEK_API_KEY=你的 DeepSeek API Key
+```
+
+不要把 API Key 写进前端代码或提交到 GitHub。
+
+后续可以加入分享图、登录账号和更细的 AI 深度解读。
