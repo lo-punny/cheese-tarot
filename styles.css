@@ -512,9 +512,19 @@ h2 {
 }
 
 .ai-summary p:last-child {
+  display: grid;
+  gap: 10px;
   margin: 12px 0 0;
   color: #332d28;
   line-height: 1.85;
+}
+
+.ai-summary p:last-child span {
+  display: block;
+}
+
+.ai-summary p:last-child strong {
+  color: var(--wine);
 }
 
 .ai-summary[data-state="loading"] p:last-child {
@@ -555,6 +565,11 @@ h2 {
   background: #fffaf1;
   color: var(--wine);
   padding: 0 16px;
+}
+
+.secondary-action:disabled {
+  cursor: wait;
+  opacity: 0.58;
 }
 
 .text-action {
