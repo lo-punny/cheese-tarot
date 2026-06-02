@@ -1,6 +1,8 @@
 const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
 const MAX_QUESTION_LENGTH = 120;
 const MAX_CARDS = 3;
+const DEFAULT_MODEL = "deepseek-chat";
+const REQUEST_TIMEOUT_MS = 8000;
 
 function setCorsHeaders(req, res) {
   const origin = req.headers.origin;
@@ -106,14 +108,17 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
         "Content-Type": "application/json"
       },
+      signal: controller.signal,
       body: JSON.stringify({
-        model: "deepseek-v4-flash",
+        model: process.env.DEEPSEEK_MODEL || DEFAULT_MODEL,
         messages: [
           {
             role: "system",
@@ -127,9 +132,10 @@ module.exports = async function handler(req, res) {
         ],
         thinking: { type: "disabled" },
         temperature: 0.7,
-        max_tokens: 260
+        max_tokens: 220
       })
     });
+    clearTimeout(timeoutId);
 
     const data = await response.json();
 
@@ -146,7 +152,12 @@ module.exports = async function handler(req, res) {
     }
 
     return sendJson(res, 200, { summary });
-  } catch {
-    return sendJson(res, 502, { error: "DeepSeek request failed" });
+  } catch (error) {
+    const message =
+      error?.name === "AbortError"
+        ? "DeepSeek request timed out"
+        : "DeepSeek request failed";
+
+    return sendJson(res, 502, { error: message });
   }
 };
