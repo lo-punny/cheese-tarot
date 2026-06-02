@@ -904,7 +904,6 @@ async function requestAiSummary(reading) {
     return;
   }
 
-  const usage = recordAiSummaryUse();
   showAiSummary("AI 正在串联牌阵...");
 
   try {
@@ -917,7 +916,8 @@ async function requestAiSummary(reading) {
     });
 
     if (!response.ok) {
-      throw new Error(`Summary request failed: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Summary request failed: ${response.status}`);
     }
 
     const data = await response.json();
@@ -928,12 +928,14 @@ async function requestAiSummary(reading) {
     }
 
     reading.summary = summary;
+    const usage = recordAiSummaryUse();
     showAiSummary(summary, "ready");
     syncSavedReading(reading);
     actionStatus.textContent = `AI 总结已生成，今日还可使用 ${DAILY_AI_LIMIT - usage.count} 次。`;
-  } catch {
+  } catch (error) {
     reading.summary = "";
-    showAiSummary("AI 总结暂时不可用，已保留基础解读。", "error");
+    const message = error?.message ? `AI 总结暂时不可用：${error.message}` : "AI 总结暂时不可用";
+    showAiSummary(`${message}。已保留基础解读。`, "error");
   }
 }
 
@@ -1047,7 +1049,9 @@ function renderReading() {
               class="tarot-image${card.orientation === "逆位" ? " is-reversed" : ""}"
               src="${card.image}"
               alt=""
-              loading="lazy"
+              loading="eager"
+              decoding="async"
+              fetchpriority="high"
               onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
             />
             <span class="tarot-symbol" hidden>${card.symbol}</span>

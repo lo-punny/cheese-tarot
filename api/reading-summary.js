@@ -2,7 +2,7 @@ const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
 const MAX_QUESTION_LENGTH = 120;
 const MAX_CARDS = 3;
 const DEFAULT_MODEL = "deepseek-v4-flash";
-const REQUEST_TIMEOUT_MS = 8000;
+const REQUEST_TIMEOUT_MS = 15000;
 
 function setCorsHeaders(req, res) {
   const origin = req.headers.origin;

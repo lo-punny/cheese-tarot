@@ -57,7 +57,7 @@ button {
 }
 
 .hero__media {
-  background-image: url("./assets/tarot-hero.png");
+  background-image: url("./assets/tarot-hero.jpg");
   background-size: cover;
   background-position: center;
   transform: scale(1.02);
@@ -687,6 +687,13 @@ h2 {
     min-height: 92vh;
     align-items: flex-end;
     padding-top: 36px;
+    background:
+      radial-gradient(circle at top right, rgba(189, 138, 53, 0.18), transparent 34%),
+      linear-gradient(145deg, #191614, #33241f 58%, #1b2018);
+  }
+
+  .hero__media {
+    display: none;
   }
 
   .hero__shade {
