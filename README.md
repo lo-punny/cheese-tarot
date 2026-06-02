@@ -45,6 +45,8 @@ powershell -ExecutionPolicy Bypass -File scripts\download-rws-cards.ps1
 https://cheese-tarot.vercel.app/api/reading-summary
 ```
 
+如果网站部署在 Vercel 域名下，会自动使用同源 `/api/reading-summary`，移动端和内置浏览器更稳定。
+
 如果 Vercel 项目名不同，需要在 `app.js` 修改 `AI_SUMMARY_ENDPOINT`。
 
 Vercel 环境变量必须配置：

@@ -486,7 +486,11 @@ const AI_USAGE_KEY = "cheeseTarotAiUsage";
 const MAX_HISTORY_ITEMS = 5;
 const DAILY_AI_LIMIT = 10;
 const AI_SUMMARY_ENDPOINT =
-  window.CHEESE_TAROT_API_URL || "https://cheese-tarot.vercel.app/api/reading-summary";
+  window.CHEESE_TAROT_API_URL ||
+  (window.location.hostname.endsWith("vercel.app")
+    ? "/api/reading-summary"
+    : "https://cheese-tarot.vercel.app/api/reading-summary");
+const VERCEL_SITE_URL = "https://cheese-tarot.vercel.app";
 
 const spread = document.querySelector("#spread");
 const resultTitle = document.querySelector("#resultTitle");
@@ -917,6 +921,18 @@ function buildAiPayload(reading) {
   };
 }
 
+function isNetworkFetchError(error) {
+  return /failed to fetch|load failed|networkerror|network error/i.test(error?.message || "");
+}
+
+function buildAiErrorMessage(error) {
+  if (isNetworkFetchError(error) && !window.location.hostname.endsWith("vercel.app")) {
+    return `AI 总结暂时不可用：当前浏览器可能拦截了跨站 API 请求。请用 ${VERCEL_SITE_URL} 打开后再试`;
+  }
+
+  return error?.message ? `AI 总结暂时不可用：${error.message}` : "AI 总结暂时不可用";
+}
+
 async function requestAiSummary(reading) {
   if (!canUseAiSummary()) {
     reading.summary = "";
@@ -954,7 +970,7 @@ async function requestAiSummary(reading) {
     actionStatus.textContent = `AI 总结已生成，今日还可使用 ${DAILY_AI_LIMIT - usage.count} 次。`;
   } catch (error) {
     reading.summary = "";
-    const message = error?.message ? `AI 总结暂时不可用：${error.message}` : "AI 总结暂时不可用";
+    const message = buildAiErrorMessage(error);
     showAiSummary(`${message}。已保留基础解读。`, "error");
   }
 }

@@ -1,14 +1,24 @@
-const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
+const ALLOWED_ORIGINS = new Set([
+  "https://lo-punny.github.io",
+  "https://cheese-tarot.vercel.app"
+]);
 const MAX_QUESTION_LENGTH = 120;
 const MAX_CARDS = 3;
 const DEFAULT_MODEL = "deepseek-v4-flash";
 const FALLBACK_MODEL = "deepseek-chat";
 const REQUEST_TIMEOUT_MS = 15000;
 
+function isAllowedOrigin(origin) {
+  return (
+    ALLOWED_ORIGINS.has(origin) ||
+    /^https:\/\/cheese-tarot(?:-[a-z0-9-]+)?\.vercel\.app$/.test(origin || "")
+  );
+}
+
 function setCorsHeaders(req, res) {
   const origin = req.headers.origin;
 
-  if (ALLOWED_ORIGINS.has(origin)) {
+  if (isAllowedOrigin(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
@@ -138,7 +148,7 @@ module.exports = async function handler(req, res) {
   setCorsHeaders(req, res);
 
   const origin = req.headers.origin;
-  if (origin && !ALLOWED_ORIGINS.has(origin)) {
+  if (origin && !isAllowedOrigin(origin)) {
     return sendJson(res, 403, { error: "Origin is not allowed" });
   }
 
