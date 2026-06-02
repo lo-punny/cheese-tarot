@@ -318,7 +318,7 @@ h2 {
 }
 
 .tarot-card {
-  aspect-ratio: 4 / 5.7;
+  aspect-ratio: 500 / 866;
   display: grid;
   place-items: center;
   position: relative;
@@ -338,7 +338,7 @@ h2 {
   z-index: 1;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background: #efe5d1;
   transition: transform 220ms ease;
 }
@@ -364,17 +364,41 @@ h2 {
 }
 
 .tarot-symbol {
-  position: relative;
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
   z-index: 3;
   display: grid;
   place-items: center;
-  width: 54%;
-  aspect-ratio: 1;
-  border-radius: 50%;
+  max-width: calc(100% - 36px);
+  min-height: 36px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 250, 241, 0.28);
-  font-size: clamp(1.85rem, 4.5vw, 3.2rem);
+  padding: 6px 10px;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 800;
   line-height: 1;
   white-space: nowrap;
+  transform: translateX(-50%);
+  background: rgba(25, 22, 20, 0.62);
+  color: #fffaf1;
+}
+
+.tarot-symbol[hidden] {
+  display: none;
+}
+
+.card-result.is-shuffling .tarot-symbol {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: 54%;
+  aspect-ratio: 1;
+  min-height: 0;
+  border-radius: 50%;
+  padding: 0;
+  font-size: clamp(1.85rem, 4.5vw, 3.2rem);
+  transform: none;
   background: rgba(255, 250, 241, 0.08);
 }
 
