@@ -130,16 +130,27 @@ module.exports = async function handler(req, res) {
             content: buildPrompt(value)
           }
         ],
-        thinking: { type: "disabled" },
         temperature: 0.7,
         max_tokens: 220
       })
     });
     clearTimeout(timeoutId);
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data = {};
+
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      data = {};
+    }
 
     if (!response.ok) {
+      console.error("DeepSeek request failed", {
+        status: response.status,
+        body: responseText.slice(0, 800)
+      });
+
       return sendJson(res, 502, {
         error: data?.error?.message || "DeepSeek request failed"
       });
@@ -157,6 +168,11 @@ module.exports = async function handler(req, res) {
       error?.name === "AbortError"
         ? "DeepSeek request timed out"
         : "DeepSeek request failed";
+
+    console.error("DeepSeek request exception", {
+      name: error?.name,
+      message: error?.message
+    });
 
     return sendJson(res, 502, { error: message });
   }
