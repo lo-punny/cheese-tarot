@@ -1,7 +1,7 @@
 const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
 const MAX_QUESTION_LENGTH = 120;
 const MAX_CARDS = 3;
-const DEFAULT_MODEL = "deepseek-chat";
+const DEFAULT_MODEL = "deepseek-v4-flash";
 const REQUEST_TIMEOUT_MS = 8000;
 
 function setCorsHeaders(req, res) {
@@ -74,11 +74,12 @@ function buildPrompt(payload) {
 牌面信息：
 ${cardLines}
 
-请把这些牌串联成一段中文综合总结。要求：
-1. 语气温柔、简约、偏自我反思，不要恐吓或绝对化预言。
-2. 先概括整体能量，再点出关键矛盾，最后给一个可执行的小建议。
-3. 不要重复逐张牌义，不要超过 180 个中文字符。
-4. 不提供医疗、法律、财务等专业结论。`;
+请把这些牌串联成芝士塔罗风格的中文综合总结。要求：
+1. 输出三段，每段必须用固定标题开头：整体能量：、关键提醒：、今日小行动：。
+2. 语气温柔、简约、偏自我反思，不要恐吓或绝对化预言。
+3. 不要重复逐张牌义，总字数不超过 230 个中文字符。
+4. 今日小行动必须是一个今天可以完成的小动作。
+5. 不提供医疗、法律、财务等专业结论。`;
 }
 
 module.exports = async function handler(req, res) {
@@ -131,7 +132,7 @@ module.exports = async function handler(req, res) {
           }
         ],
         temperature: 0.7,
-        max_tokens: 220
+        max_tokens: 320
       })
     });
     clearTimeout(timeoutId);

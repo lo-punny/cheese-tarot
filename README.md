@@ -14,8 +14,11 @@
 - 随机正位 / 逆位
 - 洗牌状态与分段解读
 - DeepSeek AI 综合总结接口（通过 Vercel Serverless 代理）
+- 芝士塔罗三段式 AI 总结：整体能量、关键提醒、今日小行动
+- 每个浏览器每日最多自动生成 10 次 AI 总结
 - 保存最近 5 次解读到浏览器本地
 - 复制当前解读为分享文案
+- 下载牌阵分享图
 - 本地静态运行，无需后端
 
 ## 运行方式
@@ -46,6 +49,12 @@ Vercel 环境变量必须配置：
 
 ```text
 DEEPSEEK_API_KEY=你的 DeepSeek API Key
+```
+
+默认模型为 `deepseek-v4-flash`。如需临时换模型，可在 Vercel 增加：
+
+```text
+DEEPSEEK_MODEL=模型名
 ```
 
 不要把 API Key 写进前端代码或提交到 GitHub。

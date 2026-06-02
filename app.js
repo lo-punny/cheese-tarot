@@ -482,7 +482,9 @@ let shuffleTimer = null;
 let currentReading = null;
 
 const STORAGE_KEY = "cheeseTarotReadings";
+const AI_USAGE_KEY = "cheeseTarotAiUsage";
 const MAX_HISTORY_ITEMS = 5;
+const DAILY_AI_LIMIT = 10;
 const AI_SUMMARY_ENDPOINT =
   window.CHEESE_TAROT_API_URL || "https://cheese-tarot.vercel.app/api/reading-summary";
 
@@ -497,6 +499,7 @@ const deckCount = document.querySelector("#deckCount");
 const readingActions = document.querySelector("#readingActions");
 const saveReadingButton = document.querySelector("#saveReadingButton");
 const copyReadingButton = document.querySelector("#copyReadingButton");
+const downloadShareButton = document.querySelector("#downloadShareButton");
 const actionStatus = document.querySelector("#actionStatus");
 const aiSummary = document.querySelector("#aiSummary");
 const aiSummaryText = document.querySelector("#aiSummaryText");
@@ -541,6 +544,34 @@ function setSavedReadings(readings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(readings));
 }
 
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getAiUsage() {
+  try {
+    const usage = JSON.parse(localStorage.getItem(AI_USAGE_KEY) || "{}");
+    return usage.date === getTodayKey() ? usage : { date: getTodayKey(), count: 0 };
+  } catch {
+    return { date: getTodayKey(), count: 0 };
+  }
+}
+
+function setAiUsage(usage) {
+  localStorage.setItem(AI_USAGE_KEY, JSON.stringify(usage));
+}
+
+function canUseAiSummary() {
+  return getAiUsage().count < DAILY_AI_LIMIT;
+}
+
+function recordAiSummaryUse() {
+  const usage = getAiUsage();
+  usage.count += 1;
+  setAiUsage(usage);
+  return usage;
+}
+
 function syncSavedReading(reading) {
   const readings = getSavedReadings();
   const index = readings.findIndex((item) => item.id === reading.id);
@@ -576,7 +607,7 @@ function hideReadingActions() {
 function showAiSummary(message, state = "loading") {
   aiSummary.hidden = false;
   aiSummary.dataset.state = state;
-  aiSummaryText.textContent = message;
+  aiSummaryText.innerHTML = formatSummaryHtml(message);
 }
 
 function hideAiSummary() {
@@ -625,6 +656,22 @@ function renderHistory() {
     .join("");
 }
 
+function formatSummaryHtml(summary) {
+  const text = String(summary || "").trim();
+  const parts = text.match(/(?:整体能量|关键提醒|今日小行动)：[\s\S]*?(?=(?:整体能量|关键提醒|今日小行动)：|$)/g);
+
+  if (!parts) {
+    return escapeHtml(text);
+  }
+
+  return parts
+    .map((part) => {
+      const [title, ...body] = part.split("：");
+      return `<span><strong>${escapeHtml(title)}：</strong>${escapeHtml(body.join("：").trim())}</span>`;
+    })
+    .join("");
+}
+
 function buildShareText(reading) {
   const question = reading.question || "未填写具体问题";
   const cards = reading.cards
@@ -658,6 +705,152 @@ async function copyText(text) {
   textarea.select();
   document.execCommand("copy");
   textarea.remove();
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 10) {
+  const chars = String(text || "").split("");
+  const lines = [];
+  let line = "";
+
+  chars.forEach((char) => {
+    const nextLine = line + char;
+
+    if (ctx.measureText(nextLine).width > maxWidth && line) {
+      lines.push(line);
+      line = char;
+    } else {
+      line = nextLine;
+    }
+  });
+
+  if (line) {
+    lines.push(line);
+  }
+
+  const visibleLines = lines.slice(0, maxLines);
+  visibleLines.forEach((item, index) => {
+    const suffix = index === maxLines - 1 && lines.length > maxLines ? "..." : "";
+    ctx.fillText(item + suffix, x, y + index * lineHeight);
+  });
+
+  return visibleLines.length * lineHeight;
+}
+
+function downloadCanvas(canvas, filename) {
+  const link = document.createElement("a");
+  link.download = filename;
+  link.href = canvas.toDataURL("image/png");
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+async function generateShareImage(reading) {
+  const scale = 2;
+  const width = 1080;
+  const height = reading.cards.length === 1 ? 1420 : 1550;
+  const canvas = document.createElement("canvas");
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(scale, scale);
+  ctx.fillStyle = "#f8f3ea";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = "#bd8a35";
+  ctx.font = "700 24px Microsoft YaHei, sans-serif";
+  ctx.fillText("芝士塔罗", 64, 72);
+
+  ctx.fillStyle = "#191614";
+  ctx.font = "700 54px Microsoft YaHei, sans-serif";
+  ctx.fillText(`${reading.topic} · ${reading.mode}`, 64, 136);
+
+  ctx.fillStyle = "#6c6259";
+  ctx.font = "28px Microsoft YaHei, sans-serif";
+  wrapCanvasText(ctx, `问题：${reading.question || "未填写具体问题"}`, 64, 188, 952, 40, 2);
+
+  const cardCount = reading.cards.length;
+  const gap = 28;
+  const cardWidth = cardCount === 1 ? 360 : 280;
+  const cardHeight = Math.round(cardWidth * 866 / 500);
+  const totalWidth = cardCount * cardWidth + (cardCount - 1) * gap;
+  const startX = (width - totalWidth) / 2;
+  const cardY = 270;
+
+  for (let index = 0; index < reading.cards.length; index++) {
+    const card = reading.cards[index];
+    const x = startX + index * (cardWidth + gap);
+
+    ctx.fillStyle = "#fffaf1";
+    ctx.strokeStyle = "rgba(25, 22, 20, 0.16)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(x - 12, cardY - 12, cardWidth + 24, cardHeight + 128, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    try {
+      const image = await loadImage(card.image);
+      ctx.save();
+      if (card.orientation === "逆位") {
+        ctx.translate(x + cardWidth / 2, cardY + cardHeight / 2);
+        ctx.rotate(Math.PI);
+        ctx.drawImage(image, -cardWidth / 2, -cardHeight / 2, cardWidth, cardHeight);
+      } else {
+        ctx.drawImage(image, x, cardY, cardWidth, cardHeight);
+      }
+      ctx.restore();
+    } catch {
+      ctx.fillStyle = "#8f2638";
+      ctx.fillRect(x, cardY, cardWidth, cardHeight);
+      ctx.fillStyle = "#fffaf1";
+      ctx.font = "700 44px Microsoft YaHei, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(card.symbol, x + cardWidth / 2, cardY + cardHeight / 2);
+      ctx.textAlign = "left";
+    }
+
+    ctx.fillStyle = "#556b4b";
+    ctx.font = "700 22px Microsoft YaHei, sans-serif";
+    ctx.fillText(card.position, x, cardY + cardHeight + 40);
+
+    ctx.fillStyle = "#191614";
+    ctx.font = "700 30px Microsoft YaHei, sans-serif";
+    wrapCanvasText(ctx, `${card.name} ${card.orientation}`, x, cardY + cardHeight + 78, cardWidth, 36, 2);
+  }
+
+  const summaryY = cardY + cardHeight + 170;
+  ctx.fillStyle = "#fffaf1";
+  ctx.strokeStyle = "rgba(25, 22, 20, 0.14)";
+  ctx.beginPath();
+  ctx.roundRect(64, summaryY, 952, 300, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#8f2638";
+  ctx.font = "700 30px Microsoft YaHei, sans-serif";
+  ctx.fillText("综合总结", 96, summaryY + 58);
+
+  ctx.fillStyle = "#332d28";
+  ctx.font = "28px Microsoft YaHei, sans-serif";
+  wrapCanvasText(ctx, reading.summary || "基础解读已生成，AI 综合总结暂时不可用。", 96, summaryY + 106, 888, 42, 5);
+
+  ctx.fillStyle = "#6c6259";
+  ctx.font = "22px Microsoft YaHei, sans-serif";
+  ctx.fillText("仅供娱乐与自我反思", 64, height - 62);
+
+  return canvas;
 }
 
 function sampleCards(count) {
@@ -705,6 +898,13 @@ function buildAiPayload(reading) {
 }
 
 async function requestAiSummary(reading) {
+  if (!canUseAiSummary()) {
+    reading.summary = "";
+    showAiSummary(`今日 AI 总结次数已用完，明天会自动恢复。基础解读仍可正常使用。`, "error");
+    return;
+  }
+
+  const usage = recordAiSummaryUse();
   showAiSummary("AI 正在串联牌阵...");
 
   try {
@@ -730,6 +930,7 @@ async function requestAiSummary(reading) {
     reading.summary = summary;
     showAiSummary(summary, "ready");
     syncSavedReading(reading);
+    actionStatus.textContent = `AI 总结已生成，今日还可使用 ${DAILY_AI_LIMIT - usage.count} 次。`;
   } catch {
     reading.summary = "";
     showAiSummary("AI 总结暂时不可用，已保留基础解读。", "error");
@@ -955,6 +1156,27 @@ copyReadingButton.addEventListener("click", async () => {
     showReadingActions("已复制分享文案。");
   } catch {
     showReadingActions("复制失败，可以再试一次。");
+  }
+});
+
+downloadShareButton.addEventListener("click", async () => {
+  if (!currentReading) {
+    showReadingActions("先抽一次牌，再下载分享图。");
+    return;
+  }
+
+  downloadShareButton.disabled = true;
+  actionStatus.textContent = "正在生成分享图...";
+
+  try {
+    const canvas = await generateShareImage(currentReading);
+    downloadCanvas(canvas, `cheese-tarot-${Date.now()}.png`);
+    showReadingActions("分享图已生成。");
+  } catch (error) {
+    console.error("Share image generation failed", error);
+    showReadingActions("分享图生成失败，可以稍后再试。");
+  } finally {
+    downloadShareButton.disabled = false;
   }
 });
 
