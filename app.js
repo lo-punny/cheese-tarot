@@ -505,6 +505,9 @@ const aiSummary = document.querySelector("#aiSummary");
 const aiSummaryText = document.querySelector("#aiSummaryText");
 const historyList = document.querySelector("#historyList");
 const clearHistoryButton = document.querySelector("#clearHistoryButton");
+const sharePreview = document.querySelector("#sharePreview");
+const sharePreviewImage = document.querySelector("#sharePreviewImage");
+const closeSharePreviewButton = document.querySelector("#closeSharePreviewButton");
 const modeTabs = document.querySelectorAll(".mode-tab");
 const topicButtons = document.querySelectorAll(".topic-button");
 
@@ -753,6 +756,23 @@ function downloadCanvas(canvas, filename) {
   document.body.append(link);
   link.click();
   link.remove();
+}
+
+function isMobileLikeBrowser() {
+  return (
+    window.matchMedia("(max-width: 700px)").matches ||
+    /MicroMessenger|QQBrowser|MQQBrowser|Bytedance|Aweme|NewsArticle|XiaoHongShu|Mobile/i.test(navigator.userAgent)
+  );
+}
+
+function showSharePreview(canvas) {
+  sharePreviewImage.src = canvas.toDataURL("image/png");
+  sharePreview.hidden = false;
+}
+
+function hideSharePreview() {
+  sharePreview.hidden = true;
+  sharePreviewImage.removeAttribute("src");
 }
 
 async function generateShareImage(reading) {
@@ -1174,13 +1194,26 @@ downloadShareButton.addEventListener("click", async () => {
 
   try {
     const canvas = await generateShareImage(currentReading);
-    downloadCanvas(canvas, `cheese-tarot-${Date.now()}.png`);
-    showReadingActions("分享图已生成。");
+    if (isMobileLikeBrowser()) {
+      showSharePreview(canvas);
+      showReadingActions("分享图已生成，可长按图片保存。");
+    } else {
+      downloadCanvas(canvas, `cheese-tarot-${Date.now()}.png`);
+      showReadingActions("分享图已生成。");
+    }
   } catch (error) {
     console.error("Share image generation failed", error);
     showReadingActions("分享图生成失败，可以稍后再试。");
   } finally {
     downloadShareButton.disabled = false;
+  }
+});
+
+closeSharePreviewButton.addEventListener("click", hideSharePreview);
+
+sharePreview.addEventListener("click", (event) => {
+  if (event.target === sharePreview) {
+    hideSharePreview();
   }
 });
 

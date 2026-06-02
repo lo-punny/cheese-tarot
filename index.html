@@ -154,6 +154,19 @@
       </section>
     </main>
 
+    <div class="share-preview" id="sharePreview" hidden>
+      <div class="share-preview__panel" role="dialog" aria-modal="true" aria-label="分享图预览">
+        <div class="share-preview__head">
+          <h2>分享图</h2>
+          <button class="text-action" type="button" id="closeSharePreviewButton">
+            关闭
+          </button>
+        </div>
+        <p>手机内置浏览器可能无法直接下载图片，可以长按下方图片保存。</p>
+        <img id="sharePreviewImage" alt="芝士塔罗分享图" />
+      </div>
+    </div>
+
     <script src="./app.js" defer></script>
   </body>
 </html>

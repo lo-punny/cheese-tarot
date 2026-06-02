@@ -2,6 +2,7 @@ const ALLOWED_ORIGINS = new Set(["https://lo-punny.github.io"]);
 const MAX_QUESTION_LENGTH = 120;
 const MAX_CARDS = 3;
 const DEFAULT_MODEL = "deepseek-v4-flash";
+const FALLBACK_MODEL = "deepseek-chat";
 const REQUEST_TIMEOUT_MS = 15000;
 
 function setCorsHeaders(req, res) {
@@ -82,6 +83,57 @@ ${cardLines}
 5. 不提供医疗、法律、财务等专业结论。`;
 }
 
+async function callDeepSeek(model, value) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model,
+        messages: [
+          {
+            role: "system",
+            content:
+              "你是芝士塔罗的解读助手，只做娱乐与自我反思向的塔罗文字总结，避免绝对化预测。"
+          },
+          {
+            role: "user",
+            content: buildPrompt(value)
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 320
+      })
+    });
+
+    const responseText = await response.text();
+    let data = {};
+
+    try {
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      data = {};
+    }
+
+    return {
+      data,
+      model,
+      ok: response.ok,
+      responseText,
+      status: response.status
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 module.exports = async function handler(req, res) {
   setCorsHeaders(req, res);
 
@@ -109,55 +161,31 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-    const response = await fetch("https://api.deepseek.com/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: process.env.DEEPSEEK_MODEL || DEFAULT_MODEL,
-        messages: [
-          {
-            role: "system",
-            content:
-              "你是芝士塔罗的解读助手，只做娱乐与自我反思向的塔罗文字总结，避免绝对化预测。"
-          },
-          {
-            role: "user",
-            content: buildPrompt(value)
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 320
-      })
-    });
-    clearTimeout(timeoutId);
+    const primaryModel = process.env.DEEPSEEK_MODEL || DEFAULT_MODEL;
+    let result = await callDeepSeek(primaryModel, value);
 
-    const responseText = await response.text();
-    let data = {};
-
-    try {
-      data = responseText ? JSON.parse(responseText) : {};
-    } catch {
-      data = {};
+    if (!result.ok && primaryModel !== FALLBACK_MODEL) {
+      console.error("DeepSeek primary model failed", {
+        model: result.model,
+        status: result.status,
+        body: result.responseText.slice(0, 800)
+      });
+      result = await callDeepSeek(FALLBACK_MODEL, value);
     }
 
-    if (!response.ok) {
+    if (!result.ok) {
       console.error("DeepSeek request failed", {
-        status: response.status,
-        body: responseText.slice(0, 800)
+        model: result.model,
+        status: result.status,
+        body: result.responseText.slice(0, 800)
       });
 
       return sendJson(res, 502, {
-        error: data?.error?.message || "DeepSeek request failed"
+        error: result.data?.error?.message || "DeepSeek request failed"
       });
     }
 
-    const summary = data?.choices?.[0]?.message?.content?.trim();
+    const summary = result.data?.choices?.[0]?.message?.content?.trim();
 
     if (!summary) {
       return sendJson(res, 502, { error: "DeepSeek summary is empty" });
